@@ -36,17 +36,21 @@ app.get("/get", async (req, res) => {
 });
 
 app.post("/post", async (req, res) => {
-  const { player, score } = req.body;
-  console.log(player, score);
+  const { player1, score1, player2, score2 } = req.body;
 
-  if (typeof player != String && typeof score != Number) {
+  if (
+    typeof player1 != "string" ||
+    typeof score1 != "number" ||
+    typeof player2 != "string" ||
+    typeof score2 != "number"
+  ) {
     res.sendStatus(400);
     return;
   }
 
   await TennisSchema.updateMany(
-    { player: player },
-    { $set: { score: score } },
+    { player1: player1 },
+    { $set: { player2: player2, score1: score1, score2: score2 } },
     { upsert: true }
   );
   res.sendStatus(200);
