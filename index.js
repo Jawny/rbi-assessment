@@ -32,33 +32,39 @@ app.use(bodyParser.json());
 app.use(cors());
 
 // READ: return all documents in database
-app.get("/get", async (req, res) => {
+app.get("/", async (req, res) => {
   const databaseData = await GetDatabaseData();
   await res.send(databaseData);
 });
 
 // CREATE: create a new document with scores [0,0] and return the document data
 app.post("/create", async (req, res) => {
-  TennisSchema.create({ scores: [0, 0] }, (err, result) => {
-    if (err) {
-      console.error(err);
-    } else {
-      res.send(result);
-    }
+  TennisSchema.create({ scores: [0, 0] }, (err, createdDocument) => {
+    err ? res.status(400).json(err) : res.status(200).json(createdDocument);
   });
 });
 
 // UPDATE: update document by id. Update the scores in database from request.
-app.post("/post", async (req, res) => {
+app.put("/update", async (req, res) => {
   const { scores, id } = req.body;
   console.log(scores, id);
 
   TennisSchema.findOneAndUpdate(
     { _id: id },
     { scores },
-    { upsert: true, new: true }
-  ).then((result) => {
-    res.status(200).json(result);
+    { upsert: true, new: true },
+    (err, updatedScores) => {
+      err ? res.status(400).json(err) : res.status(200).json(updatedScores);
+    }
+  );
+});
+
+// DELETE: delete document by id
+app.delete("/delete", async (req, res) => {
+  const { id } = req.body;
+  console.log(id);
+  TennisSchema.deleteOne({ _id: id }, (err, deletedDocument) => {
+    err ? res.status(400).json(err) : res.status(200).json(deletedDocument);
   });
 });
 
