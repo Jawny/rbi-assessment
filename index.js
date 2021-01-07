@@ -8,8 +8,9 @@ require("dotenv").config();
 
 const PORT = process.env.PORT || 8000;
 
+// Connect to mongoDB
 mongoose.connect(
-  `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASS}@reddit-news.d07dt.mongodb.net/reddit-news?retryWrites=true&w=majority`,
+  `mongodb+srv://${process.env.MONGO_USER}:${process.env.MONGO_PASS}@cluster0.a09hu.mongodb.net/rbi?retryWrites=true&w=majority`,
   {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -30,30 +31,35 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cors());
 
+// READ: return all documents in database
 app.get("/get", async (req, res) => {
   const databaseData = await GetDatabaseData();
   await res.send(databaseData);
 });
 
+// CREATE: create a new document with scores [0,0] and return the document data
+app.post("/create", async (req, res) => {
+  TennisSchema.create({ scores: [0, 0] }, (err, result) => {
+    if (err) {
+      console.error(err);
+    } else {
+      res.send(result);
+    }
+  });
+});
+
+// UPDATE: update document by id. Update the scores in database from request.
 app.post("/post", async (req, res) => {
-  const { player1, score1, player2, score2 } = req.body;
+  const { scores, id } = req.body;
+  console.log(scores, id);
 
-  if (
-    typeof player1 != "string" ||
-    typeof score1 != "number" ||
-    typeof player2 != "string" ||
-    typeof score2 != "number"
-  ) {
-    res.sendStatus(400);
-    return;
-  }
-
-  await TennisSchema.updateMany(
-    { player1: player1 },
-    { $set: { player2: player2, score1: score1, score2: score2 } },
-    { upsert: true }
-  );
-  res.sendStatus(200);
+  TennisSchema.findOneAndUpdate(
+    { _id: id },
+    { scores },
+    { upsert: true, new: true }
+  ).then((result) => {
+    res.status(200).json(result);
+  });
 });
 
 app.listen(PORT, () => console.log(`Server started on port ${PORT}`));
